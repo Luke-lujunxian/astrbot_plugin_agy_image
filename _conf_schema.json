@@ -1,0 +1,108 @@
+{
+  "backend": {
+    "description": "生图后端：gemini_web（推荐，使用网页版 Gemini Cookie）、gemini_cli（需 API Key）或 agy",
+    "type": "string",
+    "options": ["gemini_web", "gemini_cli", "agy"],
+    "default": "gemini_web"
+  },
+  "firefox_profile_path": {
+    "description": "可选：Firefox 配置目录或 cookies.sqlite 路径（留空自动查找并优先读取最新登录的 Profile）",
+    "type": "string",
+    "default": ""
+  },
+  "gemini_web_1psid": {
+    "description": "可选：手动填写 __Secure-1PSID（留空则自动从 Firefox 读取）",
+    "type": "string",
+    "default": ""
+  },
+  "gemini_web_1psidts": {
+    "description": "可选：手动填写 __Secure-1PSIDTS",
+    "type": "string",
+    "default": ""
+  },
+  "gemini_web_osid": {
+    "description": "可选：手动填写 OSID（与手动 Cookie 配套使用）",
+    "type": "string",
+    "default": ""
+  },
+  "gemini_web_secure_osid": {
+    "description": "可选：手动填写 __Secure-OSID（与手动 Cookie 配套使用）",
+    "type": "string",
+    "default": ""
+  },
+  "gemini_web_auto_refresh": {
+    "description": "是否在后台自动刷新网页版 Gemini Cookie",
+    "type": "bool",
+    "default": true
+  },
+  "gemini_web_temporary": {
+    "description": "是否使用临时对话生图（不留在网页版历史记录中）",
+    "type": "bool",
+    "default": true
+  },
+  "gemini_command": {
+    "description": "gemini 可执行文件路径（仅 backend=gemini_cli 时使用，留空自动查找）",
+    "type": "string",
+    "default": ""
+  },
+  "nanobanana_api_key": {
+    "description": "Gemini API Key（仅 backend=gemini_cli 时用于 nanobanana 扩展）",
+    "type": "string",
+    "default": ""
+  },
+  "nanobanana_model": {
+    "description": "nanobanana 生图模型（仅 backend=gemini_cli 时使用，留空用默认）",
+    "type": "string",
+    "default": ""
+  },
+  "agy_command": {
+    "description": "agy 可执行文件路径（仅 backend=agy 时使用，留空自动查找）",
+    "type": "string",
+    "default": ""
+  },
+  "proxy_url": {
+    "description": "可选 HTTP 代理地址（如 http://127.0.0.1:10808；留空则继承系统环境）",
+    "type": "string",
+    "default": ""
+  },
+  "model": {
+    "description": "可选：指定模型名称（留空用后端默认）",
+    "type": "string",
+    "default": ""
+  },
+  "timeout_seconds": {
+    "description": "单次生图超时时间（秒）",
+    "type": "int",
+    "default": 120
+  },
+  "auto_send_to_user": {
+    "description": "生成成功后自动把图片发送到当前会话",
+    "type": "bool",
+    "default": true
+  },
+  "openai_bridge_enabled": {
+    "description": "启动本地 OpenAI 兼容生图桥接服务（供陪伴插件等复用 gemini_web 生图/改图）",
+    "type": "bool",
+    "default": true
+  },
+  "openai_bridge_host": {
+    "description": "本地桥接监听地址（安全起见建议仅监听 127.0.0.1）",
+    "type": "string",
+    "default": "127.0.0.1"
+  },
+  "openai_bridge_port": {
+    "description": "本地桥接监听端口",
+    "type": "int",
+    "default": 18765
+  },
+  "openai_bridge_api_key": {
+    "description": "可选桥接访问密钥（留空则仅允许本机免密访问）",
+    "type": "string",
+    "default": ""
+  },
+  "expose_llm_tool": {
+    "description": "是否向模型注册独立的 agy_generate_image 工具（接入陪伴插件后建议关闭，避免与陪伴插件自带 image_generate/image_edit 冲突；/agy生图 命令不受影响）",
+    "type": "bool",
+    "default": true
+  }
+}

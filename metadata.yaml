@@ -1,0 +1,12 @@
+name: astrbot_plugin_agy_image
+display_name: Gemini / AGY 生图工具
+short_desc: 支持网页版 Gemini（Firefox Cookie）、gemini-cli 与 agy 生图并发送到当前会话
+desc: 注册 agy_generate_image LLM 工具与 /agy生图 指令，支持通过网页版 Gemini（自动读取 Firefox Cookie）、gemini-cli (nanobanana) 或本地 agy 客户端生成图片并自动发送。
+version: 0.4.0
+author: luke_lu
+astrbot_version: ">=4.29.0"
+tags:
+  - gemini
+  - agy
+  - 生图
+  - Image

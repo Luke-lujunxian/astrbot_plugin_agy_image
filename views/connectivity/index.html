@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>连通性测试</title>
+    <script src="/api/plugin/page/bridge-sdk.js"></script>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #1b2230;
+        --muted: #606a7c;
+        --border: #dfe4ee;
+        --accent: #3b66f5;
+        --accent-hover: #2d55d8;
+        --ok: #137333;
+        --ok-bg: #e8f5e9;
+        --err: #b3261e;
+        --err-bg: #fdecea;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #14171f;
+          --card: #1d222d;
+          --text: #e8edf5;
+          --muted: #98a2b3;
+          --border: #2c3445;
+          --ok: #7cd992;
+          --ok-bg: #163322;
+          --err: #f28b82;
+          --err-bg: #3b1d1c;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.5;
+      }
+      .wrap {
+        max-width: 780px;
+        margin: 0 auto;
+        display: grid;
+        gap: 16px;
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 18px 20px;
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 18px;
+      }
+      .sub {
+        margin: 0;
+        color: var(--muted);
+        font-size: 13px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 10px 16px;
+        margin-top: 14px;
+        font-size: 13px;
+      }
+      .kv-label {
+        color: var(--muted);
+        font-size: 12px;
+      }
+      .kv-val {
+        font-weight: 600;
+        word-break: break-all;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--card);
+        color: var(--text);
+        padding: 9px 16px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.primary {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+      }
+      button.primary:hover:not(:disabled) {
+        background: var(--accent-hover);
+      }
+      button:hover:not(:disabled) {
+        opacity: 0.92;
+      }
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+      .banner {
+        padding: 10px 14px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 600;
+        margin-bottom: 12px;
+      }
+      .banner.ok {
+        background: var(--ok-bg);
+        color: var(--ok);
+      }
+      .banner.err {
+        background: var(--err-bg);
+        color: var(--err);
+      }
+      pre {
+        margin: 0;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        overflow: auto;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .preview {
+        margin-top: 14px;
+      }
+      .preview img {
+        max-width: 100%;
+        max-height: 420px;
+        border-radius: 10px;
+        border: 1px solid var(--border);
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <section class="card">
+        <h1>Gemini / AGY 生图连通性测试</h1>
+        <p class="sub">检查当前后端、Firefox Cookie / 会话初始化与本地 OpenAI 兼容桥接状态。</p>
+        <div class="grid" id="status-grid">
+          <div><div class="kv-label">当前后端</div><div class="kv-val" id="st-backend">读取中…</div></div>
+          <div><div class="kv-label">本地桥接</div><div class="kv-val" id="st-bridge">读取中…</div></div>
+          <div><div class="kv-label">独立工具状态</div><div class="kv-val" id="st-tool">读取中…</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="actions">
+          <button id="btn-ping" class="primary" type="button">连通性测试（仅校验登录与桥接）</button>
+          <button id="btn-gen" type="button">完整生图测试（生成一张测试图）</button>
+          <button id="btn-refresh" type="button">刷新状态</button>
+        </div>
+      </section>
+
+      <section class="card" id="result-card" hidden>
+        <div id="result-banner" class="banner"></div>
+        <pre id="result-json"></pre>
+        <div class="preview" id="preview-box" hidden>
+          <img id="preview-img" alt="测试生成图片" />
+        </div>
+      </section>
+    </div>
+
+    <script>
+      const getBridge = () => window.AstrBotPluginView || window.AstrBotPluginPage;
+      const btnPing = document.getElementById("btn-ping");
+      const btnGen = document.getElementById("btn-gen");
+      const btnRefresh = document.getElementById("btn-refresh");
+      const resultCard = document.getElementById("result-card");
+      const resultBanner = document.getElementById("result-banner");
+      const resultJson = document.getElementById("result-json");
+      const previewBox = document.getElementById("preview-box");
+      const previewImg = document.getElementById("preview-img");
+
+      function setBusy(busy) {
+        btnPing.disabled = busy;
+        btnGen.disabled = busy;
+        btnRefresh.disabled = busy;
+      }
+
+      async function loadStatus() {
+        try {
+          const bridge = getBridge();
+          if (!bridge) throw new Error("AstrBotPluginPage bridge 尚未加载");
+          const res = await bridge.apiGet("status");
+          const data = res?.data || res;
+          document.getElementById("st-backend").textContent = data.backend || "unknown";
+          document.getElementById("st-bridge").textContent = data.bridge_running
+            ? `运行中 (${data.bridge_url})`
+            : (data.bridge_enabled ? "未运行" : "已禁用");
+          document.getElementById("st-tool").textContent = data.expose_llm_tool
+            ? "已启用 agy_generate_image"
+            : "已隐藏（交由陪伴插件接管）";
+        } catch (err) {
+          document.getElementById("st-backend").textContent = `读取失败: ${err.message || err}`;
+        }
+      }
+
+      async function runTest(generateImage) {
+        setBusy(true);
+        resultCard.hidden = false;
+        resultBanner.className = "banner";
+        resultBanner.textContent = generateImage
+          ? "正在通过本地桥接执行完整生图测试，请稍候…"
+          : "正在检查连通性与登录状态…";
+        resultJson.textContent = "";
+        previewBox.hidden = true;
+        previewImg.removeAttribute("src");
+
+        try {
+          const bridge = getBridge();
+          if (!bridge) throw new Error("AstrBotPluginPage bridge 尚未加载");
+          const res = await bridge.apiPost("connectivity-test", { generate_image: generateImage });
+          const data = res?.data || res;
+          const ok = Boolean(data?.ok);
+          resultBanner.className = `banner ${ok ? "ok" : "err"}`;
+          resultBanner.textContent = ok
+            ? `测试通过（耗时 ${data.elapsed_ms ?? "-"} ms）`
+            : `测试失败：${data?.error || "未知错误"}`;
+
+          const display = { ...data };
+          if (display.image_base64) {
+            previewImg.src = `data:${display.mime_type || "image/png"};base64,${display.image_base64}`;
+            previewBox.hidden = false;
+            display.image_base64 = `<omitted: ${display.size_bytes || 0} bytes>`;
+          }
+          resultJson.textContent = JSON.stringify(display, null, 2);
+          await loadStatus();
+        } catch (err) {
+          resultBanner.className = "banner err";
+          resultBanner.textContent = `请求失败：${err.message || err}`;
+        } finally {
+          setBusy(false);
+        }
+      }
+
+      btnPing.addEventListener("click", () => runTest(false));
+      btnGen.addEventListener("click", () => runTest(true));
+      btnRefresh.addEventListener("click", () => loadStatus());
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => loadStatus());
+      } else {
+        loadStatus();
+      }
+    </script>
+  </body>
+</html>
